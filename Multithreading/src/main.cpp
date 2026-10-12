@@ -21,20 +21,24 @@ Additonal considerations:
 static TaskHandle_t led1Handle = NULL;
 static TaskHandle_t led2Handle = NULL;
 
+SemaphoreHandle_t serialMutex = NULL;
+
 void LED1Task(void* pvParameters){
 
   int counter1 = 0;
 
   for(;;){             
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    digitalWrite(1,HIGH);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    digitalWrite(1, LOW);
 
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  digitalWrite(1,HIGH);
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  digitalWrite(1, LOW);
-
-  counter1++;
-  Serial.print("LED 1 blinks: ");
-  Serial.println(counter1);
+    counter1++;
+    
+    if(xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE){
+      Serial.printf("%d,LED1,%lu\n", xPortGetCoreID(),counter1);
+      xSemaphoreGive(serialMutex);
+    }
   }
 }
 
@@ -48,9 +52,12 @@ void LED2Task(void* pvParameters){
     vTaskDelay(pdMS_TO_TICKS(1000));
     digitalWrite(2, LOW);
 
-    counter2++;
-    Serial.print("LED 2 blinks: ");
-    Serial.println(counter2);
+     counter2++;
+
+    if(xSemaphoreTake(serialMutex, portMAX_DELAY) == pdTRUE) {
+      Serial.printf("%d,LED2,%lu\n",xPortGetCoreID(),counter2);
+      xSemaphoreGive(serialMutex);
+    }
   }
 }
 
@@ -65,11 +72,19 @@ void setup() {
   xTaskCreatePinnedToCore(LED1Task, "LED1", 2288, NULL, 1, &led1Handle, 0);
   xTaskCreatePinnedToCore(LED2Task, "LED2", 2288, NULL, 1, &led2Handle, 1);
 
-  
+  serialMutex = xSemaphoreCreateMutex();
+
+  if(serialMutex == NULL){
+    Serial.println("Failed to create mutex");
+    return;
+  }
+
+  Serial.println("core,led,blink_count");
+
+  xTaskCreatePinnedToCore(LED1Task, "LED1", 12288, NULL, 1, &led1Handle, 0);
+  xTaskCreatePinnedToCore(LED2Task, "LED2", 12288, NULL, 1, &led2Handle, 1);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-
 }
