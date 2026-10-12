@@ -22,20 +22,36 @@ static TaskHandle_t led1Handle = NULL;
 static TaskHandle_t led2Handle = NULL;
 
 void LED1Task(void* pvParameters){
-  for(;;){                          
+
+  int counter1 = 0;
+
+  for(;;){             
+
   vTaskDelay(pdMS_TO_TICKS(1000));
   digitalWrite(1,HIGH);
   vTaskDelay(pdMS_TO_TICKS(1000));
   digitalWrite(1, LOW);
+
+  counter1++;
+  Serial.print("LED 1 blinks: ");
+  Serial.println(counter1);
   }
 }
 
 void LED2Task(void* pvParameters){
+
+  int counter2 = 0;
+
   for(;;){
     vTaskDelay(pdMS_TO_TICKS(1000));
     digitalWrite(2,HIGH);
     vTaskDelay(pdMS_TO_TICKS(1000));
-    digitalWrite(2, LOW);}
+    digitalWrite(2, LOW);
+
+    counter2++;
+    Serial.print("LED 2 blinks: ");
+    Serial.println(counter2);
+  }
 }
 
 void setup() {
